@@ -12,7 +12,7 @@ using RestauranteAPI.DataAccess.Context;
 namespace RestauranteAPI.DataAccess.Migrations
 {
     [DbContext(typeof(RestauranteDbContext))]
-    [Migration("20260506155554_InitialCreate")]
+    [Migration("20260528153249_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -52,6 +52,9 @@ namespace RestauranteAPI.DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -68,11 +71,13 @@ namespace RestauranteAPI.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsAvailable")
@@ -83,7 +88,11 @@ namespace RestauranteAPI.DataAccess.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -104,7 +113,10 @@ namespace RestauranteAPI.DataAccess.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
 
-                    b.Property<int>("NumberOfPeople")
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PartySize")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("ReservationDate")
@@ -115,6 +127,9 @@ namespace RestauranteAPI.DataAccess.Migrations
 
                     b.Property<int>("TableId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -127,32 +142,38 @@ namespace RestauranteAPI.DataAccess.Migrations
 
             modelBuilder.Entity("RestauranteAPI.Domain.Entities.ReservationMenuItem", b =>
                 {
-                    b.Property<int>("ReservationId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("MenuItemId")
-                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Id")
+                    b.Property<int>("MenuItemId")
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("int");
 
-                    b.HasKey("ReservationId", "MenuItemId");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("MenuItemId");
+
+                    b.HasIndex("ReservationId", "MenuItemId")
+                        .IsUnique();
 
                     b.ToTable("ReservationMenuItems");
                 });
 
-            modelBuilder.Entity("RestauranteAPI.Domain.Entities.Table", b =>
+            modelBuilder.Entity("RestauranteAPI.Domain.Entities.RestaurantTable", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -166,11 +187,17 @@ namespace RestauranteAPI.DataAccess.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TableNumber")
+                    b.Property<int>("Number")
                         .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -185,10 +212,10 @@ namespace RestauranteAPI.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RestauranteAPI.Domain.Entities.Table", "Table")
+                    b.HasOne("RestauranteAPI.Domain.Entities.RestaurantTable", "Table")
                         .WithMany("Reservations")
                         .HasForeignKey("TableId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Customer");
@@ -199,13 +226,13 @@ namespace RestauranteAPI.DataAccess.Migrations
             modelBuilder.Entity("RestauranteAPI.Domain.Entities.ReservationMenuItem", b =>
                 {
                     b.HasOne("RestauranteAPI.Domain.Entities.MenuItem", "MenuItem")
-                        .WithMany("ReservationItems")
+                        .WithMany("ReservationMenuItems")
                         .HasForeignKey("MenuItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RestauranteAPI.Domain.Entities.Reservation", "Reservation")
-                        .WithMany("ReservationItems")
+                        .WithMany("ReservationMenuItems")
                         .HasForeignKey("ReservationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -222,15 +249,15 @@ namespace RestauranteAPI.DataAccess.Migrations
 
             modelBuilder.Entity("RestauranteAPI.Domain.Entities.MenuItem", b =>
                 {
-                    b.Navigation("ReservationItems");
+                    b.Navigation("ReservationMenuItems");
                 });
 
             modelBuilder.Entity("RestauranteAPI.Domain.Entities.Reservation", b =>
                 {
-                    b.Navigation("ReservationItems");
+                    b.Navigation("ReservationMenuItems");
                 });
 
-            modelBuilder.Entity("RestauranteAPI.Domain.Entities.Table", b =>
+            modelBuilder.Entity("RestauranteAPI.Domain.Entities.RestaurantTable", b =>
                 {
                     b.Navigation("Reservations");
                 });
