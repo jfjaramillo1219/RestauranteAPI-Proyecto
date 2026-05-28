@@ -3,6 +3,7 @@ using Microsoft.OpenApi.Models;
 using RestauranteAPI.API.Mappings;
 using RestauranteAPI.DataAccess.Context;
 using RestauranteAPI.DataAccess.Repositories;
+using RestauranteAPI.DataAccess.Seeders;
 using RestauranteAPI.Domain.Interfaces.Repositories;
 using RestauranteAPI.Domain.Interfaces.Services;
 using RestauranteAPI.Domain.Services;
@@ -32,6 +33,9 @@ builder.Services.AddScoped<IMenuItemService, MenuItemService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IReservationMenuItemService, ReservationMenuItemService>();
 
+// DataSeeder
+builder.Services.AddScoped<DataSeeder>();
+
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -55,12 +59,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Migrations + Seeder
+// Migrations
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<RestauranteDbContext>();
-    context.Database.Migrate();
-    DataSeeder.SeedData(context);
+    var db = scope.ServiceProvider.GetRequiredService<RestauranteDbContext>();
+    db.Database.Migrate();
+}
+
+// Seeder
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAsync();
 }
 
 if (app.Environment.IsDevelopment())
