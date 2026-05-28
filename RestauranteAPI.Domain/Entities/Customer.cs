@@ -1,13 +1,11 @@
-﻿namespace RestauranteAPI.Domain.Entities
-{
-    public class Customer : AuditBase
-    {
-        public string FirstName { get; set; } = null!;
-        public string LastName { get; set; } = null!;
-        public string Email { get; set; } = null!;
-        public string Phone { get; set; } = null!;
+namespace RestauranteAPI.Domain.Entities;
 
-        // Relación 1:N (Un cliente puede tener muchas reservas)
-        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
-    }
+public class Customer : AuditBase
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+
+    public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 }

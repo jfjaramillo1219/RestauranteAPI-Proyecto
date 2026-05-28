@@ -1,13 +1,14 @@
-﻿namespace RestauranteAPI.Domain.Entities
-{
-    public class MenuItem : AuditBase
-    {
-        public string Name { get; set; } = null!;
-        public string Description { get; set; } = string.Empty;
-        public decimal Price { get; set; }
-        public bool IsAvailable { get; set; } = true;
+using RestauranteAPI.Domain.Enums;
 
-        // Relación N:M hacia las reservas
-        public ICollection<ReservationMenuItem> ReservationItems { get; set; } = new List<ReservationMenuItem>();
-    }
+namespace RestauranteAPI.Domain.Entities;
+
+public class MenuItem : AuditBase
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public decimal Price { get; set; }
+    public MenuItemCategory Category { get; set; }
+    public bool IsAvailable { get; set; } = true;
+
+    public ICollection<ReservationMenuItem> ReservationMenuItems { get; set; } = new List<ReservationMenuItem>();
 }

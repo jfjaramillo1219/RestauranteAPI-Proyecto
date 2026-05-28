@@ -1,44 +1,42 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using RestauranteAPI.Domain.Entities;
 
-namespace RestauranteAPI.DataAccess.Context
+namespace RestauranteAPI.DataAccess.Context;
+
+public class RestauranteDbContext : DbContext
 {
-    public class RestauranteDbContext : DbContext
+    public RestauranteDbContext(DbContextOptions<RestauranteDbContext> options) : base(options) { }
+
+    public DbSet<Customer> Customers { get; set; }
+    public DbSet<RestaurantTable> Tables { get; set; }
+    public DbSet<MenuItem> MenuItems { get; set; }
+    public DbSet<Reservation> Reservations { get; set; }
+    public DbSet<ReservationMenuItem> ReservationMenuItems { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Constructor obligatorio para recibir las opciones de conexión
-        public RestauranteDbContext(DbContextOptions<RestauranteDbContext> options) : base(options)
-        {
-        }
+        base.OnModelCreating(modelBuilder);
 
-        // Estas propiedades DbSet se convertirán en las tablas de tu base de datos
-        public DbSet<Customer> Customers { get; set; }
-        public DbSet<Table> Tables { get; set; }
-        public DbSet<MenuItem> MenuItems { get; set; }
-        public DbSet<Reservation> Reservations { get; set; }
-        public DbSet<ReservationMenuItem> ReservationMenuItems { get; set; }
+        // Unique composite index for N:M join table
+        modelBuilder.Entity<ReservationMenuItem>()
+            .HasIndex(rm => new { rm.ReservationId, rm.MenuItemId })
+            .IsUnique();
 
-        // Fluent API: Aquí configuramos reglas estrictas de la base de datos
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
+        // Decimal precision for price
+        modelBuilder.Entity<MenuItem>()
+            .Property(m => m.Price)
+            .HasPrecision(10, 2);
 
-            // 1. Configuración de la llave primaria compuesta para la tabla intermedia N:M
-            modelBuilder.Entity<ReservationMenuItem>()
-                .HasKey(rm => new { rm.ReservationId, rm.MenuItemId });
+        // Unique email per customer
+        modelBuilder.Entity<Customer>()
+            .HasIndex(c => c.Email)
+            .IsUnique();
 
-            // 2. Especificar la precisión de los decimales para evitar errores y advertencias en SQL Server
-            modelBuilder.Entity<ReservationMenuItem>()
-                .Property(rm => rm.UnitPrice)
-                .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<MenuItem>()
-                .Property(m => m.Price)
-                .HasColumnType("decimal(18,2)");
-
-            // 3. Regla de negocio: El email del cliente debe ser único
-            modelBuilder.Entity<Customer>()
-                .HasIndex(c => c.Email)
-                .IsUnique();
-        }
+        // Restrict delete: a table cannot be deleted if it has reservations
+        modelBuilder.Entity<Reservation>()
+            .HasOne(r => r.Table)
+            .WithMany(t => t.Reservations)
+            .HasForeignKey(r => r.TableId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
