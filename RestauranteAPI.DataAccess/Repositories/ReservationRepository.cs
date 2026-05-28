@@ -9,6 +9,12 @@ public class ReservationRepository : GenericRepository<Reservation>, IReservatio
 {
     public ReservationRepository(RestauranteDbContext context) : base(context) { }
 
+    public override async Task<IEnumerable<Reservation>> GetAllAsync() =>
+        await _context.Reservations
+            .Include(r => r.Customer)
+            .Include(r => r.Table)
+            .ToListAsync();
+
     public async Task<IEnumerable<Reservation>> GetByCustomerIdAsync(int customerId) =>
         await _context.Reservations
             .Include(r => r.Customer)
@@ -23,6 +29,8 @@ public class ReservationRepository : GenericRepository<Reservation>, IReservatio
 
     public async Task<IEnumerable<Reservation>> GetByDateAsync(DateTime date) =>
         await _context.Reservations
+            .Include(r => r.Customer)
+            .Include(r => r.Table)
             .Where(r => r.ReservationDate.Date == date.Date)
             .ToListAsync();
 

@@ -1,52 +1,80 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using RestauranteAPI.API.Mappings;
 using RestauranteAPI.DataAccess.Context;
+using RestauranteAPI.DataAccess.Repositories;
+using RestauranteAPI.Domain.Interfaces.Repositories;
+using RestauranteAPI.Domain.Interfaces.Services;
+using RestauranteAPI.Domain.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Agregamos el soporte para Controladores (Requisito de la rúbrica)
 builder.Services.AddControllers();
 
-// INYECCIÓN DE DEPENDENCIAS: Configuramos Entity Framework Core
+// DbContext
 builder.Services.AddDbContext<RestauranteDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // AutoMapper
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
-// Configuramos Swagger para .NET 8
+// Repositories
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<ITableRepository, TableRepository>();
+builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
+builder.Services.AddScoped<IReservationMenuItemRepository, ReservationMenuItemRepository>();
+
+// Services
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<ITableService, TableService>();
+builder.Services.AddScoped<IMenuItemService, MenuItemService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IReservationMenuItemService, ReservationMenuItemService>();
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Restaurante API",
+        Version = "v1",
+        Description = "Sistema de Reservas de Restaurante — ITM 2026"
+    });
+});
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader());
+});
 
 var app = builder.Build();
 
-// --- DATA SEEDER EXECUTION ---
-
-// Create a temporary scope to get the database context
+// Migrations + Seeder
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<RestauranteDbContext>();
-
-    // Apply pending migrations automatically (useful when cloning repo)
+    var context = scope.ServiceProvider.GetRequiredService<RestauranteDbContext>();
     context.Database.Migrate();
-
-    // Execute the seed data method
     DataSeeder.SeedData(context);
 }
-// -----------------------------
-// Configuramos el pipeline HTTP
+
 if (app.Environment.IsDevelopment())
 {
-    // Habilitamos la interfaz visual de Swagger
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Restaurante API v1");
+        c.RoutePrefix = string.Empty;
+    });
 }
 
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseAuthorization();
-
-// Mapeamos los controladores para que los endpoints funcionen
 app.MapControllers();
-
 app.Run();
