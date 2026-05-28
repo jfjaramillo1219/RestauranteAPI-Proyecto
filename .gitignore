@@ -361,3 +361,16 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Secrets y configuración local — NUNCA al repositorio
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env
+.env.*
+*.p12
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
