@@ -10,33 +10,31 @@ using RestauranteAPI.Domain.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-
-// DbContext
+// 1. DbContext
 builder.Services.AddDbContext<RestauranteDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// AutoMapper
+// 2. AutoMapper
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
-// Repositories
+// 3. Repositories
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ITableRepository, TableRepository>();
 builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
 builder.Services.AddScoped<IReservationRepository, ReservationRepository>();
 builder.Services.AddScoped<IReservationMenuItemRepository, ReservationMenuItemRepository>();
 
-// Services
+// 4. Services
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<ITableService, TableService>();
 builder.Services.AddScoped<IMenuItemService, MenuItemService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IReservationMenuItemService, ReservationMenuItemService>();
 
-// DataSeeder
+// 5. DataSeeder
 builder.Services.AddScoped<DataSeeder>();
 
-// Swagger
+// 6. Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -48,7 +46,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS
+// 7. CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -57,22 +55,25 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader());
 });
 
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
-// Migrations
+// 8. Auto-migrate on startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<RestauranteDbContext>();
     db.Database.Migrate();
 }
 
-// Seeder
+// 9. DataSeeder on startup
 using (var scope = app.Services.CreateScope())
 {
     var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
     await seeder.SeedAsync();
 }
 
+// 10. Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -84,7 +85,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowAll");
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
