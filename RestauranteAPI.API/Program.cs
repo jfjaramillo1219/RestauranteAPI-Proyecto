@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RestauranteAPI.API.Mappings;
 using RestauranteAPI.DataAccess.Context;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +10,9 @@ builder.Services.AddControllers();
 // INYECCIÓN DE DEPENDENCIAS: Configuramos Entity Framework Core
 builder.Services.AddDbContext<RestauranteDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// AutoMapper
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfile>());
 
 // Configuramos Swagger para .NET 8
 builder.Services.AddEndpointsApiExplorer();
