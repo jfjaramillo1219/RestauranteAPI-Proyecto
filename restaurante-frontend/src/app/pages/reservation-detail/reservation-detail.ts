@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -155,7 +155,8 @@ export class ReservationDetail implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private reservationService: ReservationService,
-    private menuItemService: MenuItemService
+    private menuItemService: MenuItemService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -168,9 +169,17 @@ export class ReservationDetail implements OnInit {
 
   loadReservation(id: number): void {
     this.loading = true;
+    this.cdr.detectChanges();
     this.reservationService.getById(id).subscribe({
-      next: (data) => { this.reservation = data; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: (data) => {
+        this.reservation = data;
+        this.loading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 

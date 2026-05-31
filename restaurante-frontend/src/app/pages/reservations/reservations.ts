@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -89,7 +89,10 @@ export class Reservations implements OnInit {
   filteredReservations: Reservation[] = [];
   selectedStatus = '';
 
-  constructor(private reservationService: ReservationService) {}
+  constructor(
+    private reservationService: ReservationService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.reservationService.getAll().subscribe({
@@ -97,8 +100,12 @@ export class Reservations implements OnInit {
         this.reservations = data;
         this.filteredReservations = data;
         this.loading = false;
+        this.cdr.detectChanges();
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 

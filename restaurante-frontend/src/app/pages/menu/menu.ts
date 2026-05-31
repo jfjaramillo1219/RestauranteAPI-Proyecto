@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -79,7 +79,10 @@ export class Menu implements OnInit {
   filteredItems: MenuItem[] = [];
   selectedCategory = '';
 
-  constructor(private menuItemService: MenuItemService) {}
+  constructor(
+    private menuItemService: MenuItemService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.menuItemService.getAll().subscribe({
@@ -87,8 +90,12 @@ export class Menu implements OnInit {
         this.items = data;
         this.filteredItems = data;
         this.loading = false;
+        this.cdr.detectChanges();
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
   }
 
