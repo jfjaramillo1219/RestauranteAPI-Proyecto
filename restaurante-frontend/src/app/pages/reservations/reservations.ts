@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -16,7 +16,7 @@ import { Reservation } from '../../core/models/reservation.model';
   selector: 'app-reservations',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, FormsModule,
+    DatePipe, RouterLink, FormsModule,
     MatCardModule, MatButtonModule, MatIconModule,
     MatSelectModule, MatFormFieldModule,
     MatProgressSpinnerModule, MatChipsModule
@@ -40,38 +40,47 @@ import { Reservation } from '../../core/models/reservation.model';
       </mat-select>
     </mat-form-field>
 
-    <div *ngIf="loading" style="display:flex;justify-content:center;padding:40px;">
-      <mat-spinner></mat-spinner>
-    </div>
+    @if (loading) {
+      <div style="display:flex;justify-content:center;padding:40px;">
+        <mat-spinner></mat-spinner>
+      </div>
+    }
 
-    <div *ngIf="!loading" style="display:grid;gap:12px;">
-      <mat-card *ngFor="let r of filteredReservations" style="cursor:pointer;"
-        [routerLink]="['/reservations', r.id]">
-        <mat-card-content style="padding:16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <h3 style="margin:0 0 4px;">{{ r.customerName }}</h3>
-              <p style="margin:0;color:#666;font-size:14px;">
-                Mesa {{ r.tableNumber }} · {{ r.partySize }} personas ·
-                {{ r.reservationDate | date:'dd/MM/yyyy HH:mm' }}
-              </p>
-              <p *ngIf="r.notes" style="margin:4px 0 0;font-size:13px;color:#888;">
-                📝 {{ r.notes }}
-              </p>
-            </div>
-            <span [style.background]="getStatusBg(r.status)"
-                  [style.color]="getStatusColor(r.status)"
-                  style="padding:4px 12px;border-radius:16px;font-size:13px;font-weight:500;">
-              {{ getStatusLabel(r.status) }}
-            </span>
-          </div>
-        </mat-card-content>
-      </mat-card>
+    @if (!loading) {
+      <div style="display:grid;gap:12px;">
+        @for (r of filteredReservations; track r.id) {
+          <mat-card style="cursor:pointer;" [routerLink]="['/reservations', r.id]">
+            <mat-card-content style="padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                  <h3 style="margin:0 0 4px;">{{ r.customerName }}</h3>
+                  <p style="margin:0;color:#666;font-size:14px;">
+                    Mesa {{ r.tableNumber }} · {{ r.partySize }} personas ·
+                    {{ r.reservationDate | date:'dd/MM/yyyy HH:mm' }}
+                  </p>
+                  @if (r.notes) {
+                    <p style="margin:4px 0 0;font-size:13px;color:#888;">
+                      📝 {{ r.notes }}
+                    </p>
+                  }
+                </div>
+                <span [style.background]="getStatusBg(r.status)"
+                      [style.color]="getStatusColor(r.status)"
+                      style="padding:4px 12px;border-radius:16px;font-size:13px;font-weight:500;">
+                  {{ getStatusLabel(r.status) }}
+                </span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
 
-      <p *ngIf="filteredReservations.length === 0" style="text-align:center;color:#666;padding:40px;">
-        No hay reservaciones para mostrar.
-      </p>
-    </div>
+        @if (filteredReservations.length === 0) {
+          <p style="text-align:center;color:#666;padding:40px;">
+            No hay reservaciones para mostrar.
+          </p>
+        }
+      </div>
+    }
   `
 })
 export class Reservations implements OnInit {

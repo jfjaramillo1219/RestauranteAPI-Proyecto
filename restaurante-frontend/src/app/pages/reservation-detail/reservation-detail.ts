@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,113 +20,127 @@ import { MenuItem } from '../../core/models/menu-item.model';
   selector: 'app-reservation-detail',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, FormsModule,
+    DatePipe, DecimalPipe, RouterLink, FormsModule,
     MatCardModule, MatButtonModule, MatIconModule,
     MatSelectModule, MatFormFieldModule, MatDividerModule,
     MatSnackBarModule, MatProgressSpinnerModule, MatChipsModule
   ],
   template: `
-    <div *ngIf="loading" style="display:flex;justify-content:center;padding:40px;">
-      <mat-spinner></mat-spinner>
-    </div>
-
-    <div *ngIf="!loading && reservation" style="max-width:700px;margin:0 auto;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:24px;">
-        <button mat-icon-button routerLink="/reservations">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-        <h2 style="margin:0;">Reserva #{{ reservation.id }}</h2>
-        <span [style.background]="getStatusBg(reservation.status)"
-              [style.color]="getStatusColor(reservation.status)"
-              style="padding:4px 12px;border-radius:16px;font-size:13px;font-weight:500;margin-left:8px;">
-          {{ getStatusLabel(reservation.status) }}
-        </span>
+    @if (loading) {
+      <div style="display:flex;justify-content:center;padding:40px;">
+        <mat-spinner></mat-spinner>
       </div>
+    }
 
-      <mat-card style="margin-bottom:16px;">
-        <mat-card-header><mat-card-title>Información</mat-card-title></mat-card-header>
-        <mat-card-content style="padding:16px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div><p style="color:#666;margin:0;font-size:13px;">Cliente</p><p style="margin:4px 0 0;font-weight:500;">{{ reservation.customerName }}</p></div>
-            <div><p style="color:#666;margin:0;font-size:13px;">Mesa</p><p style="margin:4px 0 0;font-weight:500;">Mesa {{ reservation.tableNumber }} ({{ reservation.tableCapacity }} personas)</p></div>
-            <div><p style="color:#666;margin:0;font-size:13px;">Fecha</p><p style="margin:4px 0 0;font-weight:500;">{{ reservation.reservationDate | date:'dd/MM/yyyy HH:mm' }}</p></div>
-            <div><p style="color:#666;margin:0;font-size:13px;">Personas</p><p style="margin:4px 0 0;font-weight:500;">{{ reservation.partySize }}</p></div>
-            <div *ngIf="reservation.notes" style="grid-column:span 2;"><p style="color:#666;margin:0;font-size:13px;">Notas</p><p style="margin:4px 0 0;">{{ reservation.notes }}</p></div>
-          </div>
-        </mat-card-content>
-      </mat-card>
+    @if (!loading && reservation) {
+      <div style="max-width:700px;margin:0 auto;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:24px;">
+          <button mat-icon-button routerLink="/reservations">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <h2 style="margin:0;">Reserva #{{ reservation.id }}</h2>
+          <span [style.background]="getStatusBg(reservation.status)"
+                [style.color]="getStatusColor(reservation.status)"
+                style="padding:4px 12px;border-radius:16px;font-size:13px;font-weight:500;margin-left:8px;">
+            {{ getStatusLabel(reservation.status) }}
+          </span>
+        </div>
 
-      <!-- Cambio de estado -->
-      <mat-card style="margin-bottom:16px;" *ngIf="reservation.status !== 'Completed' && reservation.status !== 'Cancelled'">
-        <mat-card-header><mat-card-title>Cambiar estado</mat-card-title></mat-card-header>
-        <mat-card-content style="padding:16px;">
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <button mat-raised-button color="primary"
-              *ngIf="reservation.status === 'Pending'"
-              (click)="changeStatus('Confirmed')">
-              ✓ Confirmar
-            </button>
-            <button mat-raised-button color="accent"
-              *ngIf="reservation.status === 'Confirmed'"
-              (click)="changeStatus('Completed')">
-              ✓ Completar
-            </button>
-            <button mat-raised-button color="warn"
-              (click)="changeStatus('Cancelled')">
-              ✗ Cancelar
-            </button>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Items del pedido -->
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>Pedido</mat-card-title>
-        </mat-card-header>
-        <mat-card-content style="padding:16px;">
-          <div *ngIf="reservation.items.length === 0" style="color:#666;padding:16px 0;">
-            No hay ítems en el pedido.
-          </div>
-          <div *ngFor="let item of reservation.items"
-               style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
-            <span>{{ item.menuItemName }} × {{ item.quantity }}</span>
-            <span style="font-weight:500;">\${{ item.subtotal | number }}</span>
-          </div>
-          <div *ngIf="reservation.items.length > 0"
-               style="display:flex;justify-content:space-between;padding:12px 0;font-weight:700;font-size:16px;">
-            <span>Total</span>
-            <span>\${{ reservation.totalAmount | number }}</span>
-          </div>
-
-          <!-- Agregar ítem -->
-          <div *ngIf="reservation.status === 'Pending' || reservation.status === 'Confirmed'"
-               style="margin-top:16px;padding-top:16px;border-top:2px solid #eee;">
-            <p style="font-weight:500;margin:0 0 12px;">Agregar ítem al pedido:</p>
-            <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-              <mat-form-field appearance="outline" style="flex:1;min-width:200px;">
-                <mat-label>Seleccionar ítem</mat-label>
-                <mat-select [(ngModel)]="selectedMenuItemId">
-                  <mat-option *ngFor="let m of availableMenuItems" [value]="m.id">
-                    {{ m.name }} — \${{ m.price | number }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
-              <mat-form-field appearance="outline" style="width:80px;">
-                <mat-label>Cant.</mat-label>
-                <input matInput type="number" [(ngModel)]="selectedQuantity" min="1">
-              </mat-form-field>
-              <button mat-raised-button color="primary"
-                [disabled]="!selectedMenuItemId"
-                (click)="addItem()"
-                style="margin-bottom:22px;">
-                Agregar
-              </button>
+        <mat-card style="margin-bottom:16px;">
+          <mat-card-header><mat-card-title>Información</mat-card-title></mat-card-header>
+          <mat-card-content style="padding:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div><p style="color:#666;margin:0;font-size:13px;">Cliente</p><p style="margin:4px 0 0;font-weight:500;">{{ reservation.customerName }}</p></div>
+              <div><p style="color:#666;margin:0;font-size:13px;">Mesa</p><p style="margin:4px 0 0;font-weight:500;">Mesa {{ reservation.tableNumber }} ({{ reservation.tableCapacity }} personas)</p></div>
+              <div><p style="color:#666;margin:0;font-size:13px;">Fecha</p><p style="margin:4px 0 0;font-weight:500;">{{ reservation.reservationDate | date:'dd/MM/yyyy HH:mm' }}</p></div>
+              <div><p style="color:#666;margin:0;font-size:13px;">Personas</p><p style="margin:4px 0 0;font-weight:500;">{{ reservation.partySize }}</p></div>
+              @if (reservation.notes) {
+                <div style="grid-column:span 2;"><p style="color:#666;margin:0;font-size:13px;">Notas</p><p style="margin:4px 0 0;">{{ reservation.notes }}</p></div>
+              }
             </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-    </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Cambio de estado -->
+        @if (reservation.status !== 'Completed' && reservation.status !== 'Cancelled') {
+          <mat-card style="margin-bottom:16px;">
+            <mat-card-header><mat-card-title>Cambiar estado</mat-card-title></mat-card-header>
+            <mat-card-content style="padding:16px;">
+              <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                @if (reservation.status === 'Pending') {
+                  <button mat-raised-button color="primary" (click)="changeStatus('Confirmed')">
+                    ✓ Confirmar
+                  </button>
+                }
+                @if (reservation.status === 'Confirmed') {
+                  <button mat-raised-button color="accent" (click)="changeStatus('Completed')">
+                    ✓ Completar
+                  </button>
+                }
+                <button mat-raised-button color="warn" (click)="changeStatus('Cancelled')">
+                  ✗ Cancelar
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Items del pedido -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Pedido</mat-card-title>
+          </mat-card-header>
+          <mat-card-content style="padding:16px;">
+            @if (reservation.items.length === 0) {
+              <div style="color:#666;padding:16px 0;">
+                No hay ítems en el pedido.
+              </div>
+            }
+            @for (item of reservation.items; track item.id) {
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;">
+                <span>{{ item.menuItemName }} × {{ item.quantity }}</span>
+                <span style="font-weight:500;">\${{ item.subtotal | number }}</span>
+              </div>
+            }
+            @if (reservation.items.length > 0) {
+              <div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:700;font-size:16px;">
+                <span>Total</span>
+                <span>\${{ reservation.totalAmount | number }}</span>
+              </div>
+            }
+
+            <!-- Agregar ítem -->
+            @if (reservation.status === 'Pending' || reservation.status === 'Confirmed') {
+              <div style="margin-top:16px;padding-top:16px;border-top:2px solid #eee;">
+                <p style="font-weight:500;margin:0 0 12px;">Agregar ítem al pedido:</p>
+                <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+                  <mat-form-field appearance="outline" style="flex:1;min-width:200px;">
+                    <mat-label>Seleccionar ítem</mat-label>
+                    <mat-select [(ngModel)]="selectedMenuItemId">
+                      @for (m of availableMenuItems; track m.id) {
+                        <mat-option [value]="m.id">
+                          {{ m.name }} — \${{ m.price | number }}
+                        </mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" style="width:80px;">
+                    <mat-label>Cant.</mat-label>
+                    <input matInput type="number" [(ngModel)]="selectedQuantity" min="1">
+                  </mat-form-field>
+                  <button mat-raised-button color="primary"
+                    [disabled]="!selectedMenuItemId"
+                    (click)="addItem()"
+                    style="margin-bottom:22px;">
+                    Agregar
+                  </button>
+                </div>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+    }
   `
 })
 export class ReservationDetail implements OnInit {

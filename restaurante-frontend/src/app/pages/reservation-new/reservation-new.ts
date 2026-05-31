@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -23,7 +22,7 @@ import { forkJoin } from 'rxjs';
   selector: 'app-reservation-new',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, ReactiveFormsModule,
+    RouterLink, ReactiveFormsModule,
     MatCardModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatButtonModule, MatDatepickerModule,
     MatNativeDateModule, MatSnackBarModule, MatProgressSpinnerModule,
@@ -40,55 +39,65 @@ import { forkJoin } from 'rxjs';
 
       <mat-card>
         <mat-card-content style="padding:24px;">
-          <div *ngIf="loadingData" style="display:flex;justify-content:center;padding:40px;">
-            <mat-spinner></mat-spinner>
-          </div>
-
-          <form *ngIf="!loadingData" [formGroup]="form" (ngSubmit)="onSubmit()">
-            <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
-              <mat-label>Cliente</mat-label>
-              <mat-select formControlName="customerId">
-                <mat-option *ngFor="let c of customers" [value]="c.id">
-                  {{ c.firstName }} {{ c.lastName }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
-              <mat-label>Mesa disponible</mat-label>
-              <mat-select formControlName="tableId">
-                <mat-option *ngFor="let t of availableTables" [value]="t.id">
-                  Mesa {{ t.number }} — {{ t.capacity }} personas — {{ t.location }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
-              <mat-label>Fecha de reserva</mat-label>
-              <input matInput [matDatepicker]="picker" formControlName="reservationDate">
-              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
-              <mat-label>Número de personas</mat-label>
-              <input matInput type="number" formControlName="partySize" min="1">
-            </mat-form-field>
-
-            <mat-form-field appearance="outline" style="width:100%;margin-bottom:24px;">
-              <mat-label>Notas (opcional)</mat-label>
-              <textarea matInput formControlName="notes" rows="3"></textarea>
-            </mat-form-field>
-
-            <div style="display:flex;gap:12px;">
-              <button mat-raised-button color="primary" type="submit"
-                [disabled]="form.invalid || submitting">
-                <mat-spinner *ngIf="submitting" diameter="20" style="display:inline-block;"></mat-spinner>
-                {{ submitting ? 'Creando...' : 'Crear reserva' }}
-              </button>
-              <button mat-button type="button" routerLink="/reservations">Cancelar</button>
+          @if (loadingData) {
+            <div style="display:flex;justify-content:center;padding:40px;">
+              <mat-spinner></mat-spinner>
             </div>
-          </form>
+          }
+
+          @if (!loadingData) {
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+              <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
+                <mat-label>Cliente</mat-label>
+                <mat-select formControlName="customerId">
+                  @for (c of customers; track c.id) {
+                    <mat-option [value]="c.id">
+                      {{ c.firstName }} {{ c.lastName }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
+                <mat-label>Mesa disponible</mat-label>
+                <mat-select formControlName="tableId">
+                  @for (t of availableTables; track t.id) {
+                    <mat-option [value]="t.id">
+                      Mesa {{ t.number }} — {{ t.capacity }} personas — {{ t.location }}
+                    </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
+                <mat-label>Fecha de reserva</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="reservationDate">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;margin-bottom:16px;">
+                <mat-label>Número de personas</mat-label>
+                <input matInput type="number" formControlName="partySize" min="1">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;margin-bottom:24px;">
+                <mat-label>Notas (opcional)</mat-label>
+                <textarea matInput formControlName="notes" rows="3"></textarea>
+              </mat-form-field>
+
+              <div style="display:flex;gap:12px;">
+                <button mat-raised-button color="primary" type="submit"
+                  [disabled]="form.invalid || submitting">
+                  @if (submitting) {
+                    <mat-spinner diameter="20" style="display:inline-block;"></mat-spinner>
+                  }
+                  {{ submitting ? 'Creando...' : 'Crear reserva' }}
+                </button>
+                <button mat-button type="button" routerLink="/reservations">Cancelar</button>
+              </div>
+            </form>
+          }
         </mat-card-content>
       </mat-card>
     </div>

@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DatePipe } from '@angular/common';
-import { forkJoin } from 'rxjs';
 import { ReservationService } from '../../core/services/reservation.service';
 import { TableService } from '../../core/services/table.service';
 import { Reservation } from '../../core/models/reservation.model';
@@ -112,26 +111,45 @@ export class Dashboard implements OnInit {
   confirmedCount = 0;
   recentReservations: Reservation[] = [];
 
+  private requestsCompleted = 0;
+
   constructor(
     private reservationService: ReservationService,
     private tableService: TableService
   ) {}
 
   ngOnInit(): void {
-    forkJoin({
-      reservations: this.reservationService.getAll(),
-      tables: this.tableService.getAll()
-    }).subscribe({
-      next: ({ reservations, tables }) => {
+    this.tableService.getAll().subscribe({
+      next: (tables) => {
         this.availableTables = tables.filter(t => t.status === 'Available').length;
         this.reservedTables = tables.filter(t => t.status === 'Reserved').length;
+        this.checkLoadingComplete();
+      },
+      error: (err) => {
+        console.error('Tables error:', err);
+        this.checkLoadingComplete();
+      }
+    });
+
+    this.reservationService.getAll().subscribe({
+      next: (reservations) => {
         this.pendingCount = reservations.filter(r => r.status === 'Pending').length;
         this.confirmedCount = reservations.filter(r => r.status === 'Confirmed').length;
         this.recentReservations = reservations.slice(0, 5);
-        this.loading = false;
+        this.checkLoadingComplete();
       },
-      error: () => { this.loading = false; }
+      error: (err) => {
+        console.error('Reservations error:', err);
+        this.checkLoadingComplete();
+      }
     });
+  }
+
+  private checkLoadingComplete(): void {
+    this.requestsCompleted++;
+    if (this.requestsCompleted >= 2) {
+      this.loading = false;
+    }
   }
 
   getStatusColor(status: string): string {
