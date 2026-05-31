@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -16,7 +16,7 @@ import { CustomerService } from '../../core/services/customer.service';
 import { TableService } from '../../core/services/table.service';
 import { Customer } from '../../core/models/customer.model';
 import { RestaurantTable } from '../../core/models/table.model';
-import { forkJoin } from 'rxjs';
+
 
 @Component({
   selector: 'app-reservation-new',
@@ -116,7 +116,8 @@ export class ReservationNew implements OnInit {
     private snackBar: MatSnackBar,
     private reservationService: ReservationService,
     private customerService: CustomerService,
-    private tableService: TableService
+    private tableService: TableService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -128,16 +129,23 @@ export class ReservationNew implements OnInit {
       notes: ['']
     });
 
-    forkJoin({
-      customers: this.customerService.getAll(),
-      tables: this.tableService.getAvailable()
-    }).subscribe({
-      next: ({ customers, tables }) => {
-        this.customers = customers;
-        this.availableTables = tables;
+    let completed = 0;
+    const checkDone = () => {
+      completed++;
+      if (completed >= 2) {
         this.loadingData = false;
-      },
-      error: () => { this.loadingData = false; }
+        this.cdr.detectChanges();
+      }
+    };
+
+    this.customerService.getAll().subscribe({
+      next: (data) => { this.customers = data; checkDone(); },
+      error: () => checkDone()
+    });
+
+    this.tableService.getAvailable().subscribe({
+      next: (data) => { this.availableTables = data; checkDone(); },
+      error: () => checkDone()
     });
   }
 
