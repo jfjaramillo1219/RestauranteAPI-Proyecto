@@ -98,3 +98,35 @@ Al iniciar por primera vez se insertan automáticamente:
 - 13 ítems de menú (3 entradas, 4 platos fuertes, 3 postres, 3 bebidas)
 - 15 reservas (3 Confirmed, 3 Completed, 2 Cancelled, 7 Pending)
 - 18 ítems de pedido asociados a reservas activas y completadas
+
+---
+
+## Frontend (Angular)
+
+### Tecnologías
+- Angular 21 (Standalone Components)
+- Angular Material 21
+- TypeScript
+
+### Instrucciones de ejecución del frontend
+
+**Prerrequisitos:** Node.js 18+ y Angular CLI (`npm install -g @angular/cli`)
+
+1. Asegúrate de que el backend esté corriendo en `http://localhost:5127`
+2. En una terminal separada:
+```bash
+cd restaurante-frontend
+npm install
+ng serve
+```
+3. Abre `http://localhost:4200`
+
+### Vistas disponibles
+
+| Ruta | Vista | Descripción |
+|------|-------|-------------|
+| `/dashboard` | Dashboard | Resumen con métricas en tiempo real |
+| `/reservations` | Listado | Reservaciones con filtro por estado |
+| `/reservations/new` | Nueva reserva | Formulario con validación y dropdowns |
+| `/reservations/:id` | Detalle | Estado, pedido, agregar ítems, totales |
+| `/menu` | Menú | Catálogo con filtro por categoría |
