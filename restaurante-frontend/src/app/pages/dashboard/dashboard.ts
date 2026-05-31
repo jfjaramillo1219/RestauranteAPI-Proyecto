@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -115,7 +115,8 @@ export class Dashboard implements OnInit {
 
   constructor(
     private reservationService: ReservationService,
-    private tableService: TableService
+    private tableService: TableService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -149,6 +150,7 @@ export class Dashboard implements OnInit {
     this.requestsCompleted++;
     if (this.requestsCompleted >= 2) {
       this.loading = false;
+      this.cdr.detectChanges();
     }
   }
 
